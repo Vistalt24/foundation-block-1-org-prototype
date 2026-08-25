@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Lindenhof Org Builder</title>
+<title>Стройсервис — Оргструктура</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -205,6 +205,24 @@
   .tree-children { margin-left: 17px; border-left: 1px dashed var(--border-strong); padding-left: 3px; }
   .tree-node.is-temp > .tree-row .tree-row__label { color: var(--temp); }
 
+  /* ---------------- Drag & Drop ---------------- */
+  .tree-row[draggable="true"] { cursor: grab; }
+  .tree-row.is-dragging { opacity: 0.4; }
+  body.dnd-active .tree-row.drop-zone-invalid { opacity: 0.35; cursor: not-allowed; }
+  body.dnd-active .tree-row.drop-zone-valid { box-shadow: inset 0 0 0 1px var(--good); background: var(--good-soft); }
+  .tree-row.drop-target-active { box-shadow: 0 0 0 2px var(--good) inset !important; background: var(--good-soft) !important; }
+  .person-row[draggable="true"] { cursor: grab; }
+  .person-row.is-dragging { opacity: 0.4; }
+
+  #dragIndicator {
+    position: fixed; z-index: 500; pointer-events: none; transform: translate(14px, 18px);
+    background: var(--ink); color: var(--paper); padding: 7px 12px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 500; box-shadow: var(--shadow); max-width: 260px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #dragIndicator.forbidden { background: var(--danger); }
+  #dragIndicator.hidden { display: none; }
+
   .unassigned-pin {
     margin: 2px 0 10px;
   }
@@ -351,10 +369,10 @@
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <div class="brand__mark">L</div>
+      <div class="brand__mark">С</div>
       <div>
-        <div class="brand__name">Lindenhof Pflegedienste</div>
-        <div class="brand__sub">Org Builder · Prototyp</div>
+        <div class="brand__name">Стройсервис</div>
+        <div class="brand__sub">Оргструктура · Прототип</div>
       </div>
     </div>
     <div class="search-box">
@@ -363,7 +381,7 @@
     </div>
     <div class="view-toggle">
       <button id="btnViewSplit" class="active">Рабочий вид</button>
-      <button id="btnViewMap">Org Map</button>
+      <button id="btnViewMap">Карта структуры</button>
     </div>
     <div class="topbar__warnings" id="topbarWarnings"></div>
   </div>
@@ -410,6 +428,7 @@
 </div>
 
 <div class="toast hidden" id="toast"></div>
+<div id="dragIndicator" class="hidden"></div>
 
 <script>
 (function () {
@@ -439,104 +458,55 @@
   }
 
   const N = {
-    company: "n_company", pflege: "n_pflege", verwaltung: "n_verwaltung", personal: "n_personal",
-    it: "n_it", filiale: "n_filiale", teamFrueh: "n_team_frueh", teamSpaet: "n_team_spaet",
-    projekt: "n_projekt", teamRollout: "n_team_rollout",
+    company: "n_company", admin: "n_admin", sales: "n_sales",
+    production: "n_production", brigade1: "n_brigade1", project: "n_project",
   };
 
   function seed() {
-    addNode({ id: N.company, name: "Lindenhof Pflegedienste", type: "company", parentId: null });
-    addNode({ id: N.pflege, name: "Pflege & Betreuung", type: "department", parentId: N.company });
-    addNode({ id: N.verwaltung, name: "Verwaltung", type: "department", parentId: N.company });
-    addNode({ id: N.personal, name: "Personal & Recruiting", type: "department", parentId: N.company });
-    addNode({ id: N.it, name: "IT & Digitalisierung", type: "department", parentId: N.company });
-    addNode({ id: N.filiale, name: "Filiale Nord", type: "branch", parentId: N.company });
-    addNode({ id: N.teamFrueh, name: "Team Frühdienst", type: "team", parentId: N.pflege });
-    addNode({ id: N.teamSpaet, name: "Team Spätdienst", type: "team", parentId: N.pflege });
+    addNode({ id: N.company, name: "Стройсервис", type: "company", parentId: null });
+    addNode({ id: N.admin, name: "Администрация", type: "department", parentId: N.company });
+    addNode({ id: N.sales, name: "Отдел продаж", type: "department", parentId: N.company });
+    addNode({ id: N.production, name: "Производство", type: "department", parentId: N.company });
+    addNode({ id: N.brigade1, name: "Бригада 1", type: "team", parentId: N.production });
     addNode({
-      id: N.projekt, name: "Projekt Digitale Pflegedokumentation", type: "project", parentId: N.company,
-      isTemporary: true, startDate: "2026-06-01", endDate: "2026-12-31",
-    });
-    addNode({
-      id: N.teamRollout, name: "Rollout-Team Ost", type: "team", parentId: N.projekt,
-      isTemporary: true, startDate: "2026-06-15", endDate: "2026-11-30",
+      id: N.project, name: "Проект «Объект Ганновер»", type: "project", parentId: N.company,
+      isTemporary: true, startDate: "2026-09-01", endDate: "2027-03-31",
     });
 
-    const firstNames = ["Anna","Lukas","Mara","Jonas","Sophie","Felix","Lena","Paul","Nina","Tobias","Julia","Simon","Laura","David","Hannah","Jan","Clara","Tim","Sarah","Max","Elena","Niklas","Marie","Fabian","Katja","Oliver","Petra","Stefan","Ines","Dennis","Robert","Sabine","Frank","Nadine","Peter"];
-    const lastNames = ["Weber","Schmidt","Fischer","Meyer","Wagner","Becker","Hoffmann","Schulz","Koch","Richter","Klein","Wolf","Neumann","Schwarz","Zimmermann","Braun","Krüger","Hartmann","Lange","Werner","Krause","Lehmann","Schmitt","Schäfer","Vogel","Fuchs","Keller","Günther","Frank","Berger","Vogt","Peters","Sommer","Horn","Busch"];
-    let nameCursor = 0;
-    function nextName() {
-      const f = firstNames[nameCursor % firstNames.length];
-      const l = lastNames[Math.floor(nameCursor / firstNames.length) % lastNames.length];
-      nameCursor++;
-      return f + " " + l;
-    }
+    // Небольшая, наглядная демо-компания (8–10 человек) — имена заданы
+    // явно, без общего генератора случайных имён: каждый человек узнаваем
+    // с первого взгляда, без прокрутки длинного списка.
 
-    function genEmployees(nodeId, count, titles) {
-      const out = [];
-      for (let i = 0; i < count; i++) {
-        const e = addEmployee({
-          id: uid("e"), name: nextName(), title: titles[i % titles.length], primaryNodeId: nodeId,
-        });
-        out.push(e);
-      }
-      return out;
-    }
+    const viktor = addEmployee({ id: uid("e"), name: "Виктор Соколов", title: "Генеральный директор", primaryNodeId: N.company });
+    nodes[N.company].managerId = viktor.id;
 
-    // Явно поименованные ключевые сотрудники (руководители и особые сценарии)
-    const thomas = addEmployee({ id: uid("e"), name: "Thomas Vogt", title: "Geschäftsführer", primaryNodeId: N.company });
-    nodes[N.company].managerId = thomas.id;
+    const nadezhda = addEmployee({ id: uid("e"), name: "Надежда Кузнецова", title: "Руководитель администрации", primaryNodeId: N.admin });
+    nodes[N.admin].managerId = nadezhda.id;
 
-    const renate = addEmployee({ id: uid("e"), name: "Renate Hoffmann", title: "Bereichsleitung Pflege", primaryNodeId: N.pflege });
-    nodes[N.pflege].managerId = renate.id;
-
-    const karl = addEmployee({ id: uid("e"), name: "Karl Becker", title: "Leitung Verwaltung", primaryNodeId: N.verwaltung });
-    nodes[N.verwaltung].managerId = karl.id;
-
-    // Personal & Recruiting — намеренно БЕЗ руководителя (демонстрация warning)
-
-    const dennis = addEmployee({ id: uid("e"), name: "Dennis Krüger", title: "IT-Leitung", primaryNodeId: N.it });
-    nodes[N.it].managerId = dennis.id;
-
-    const ines = addEmployee({ id: uid("e"), name: "Ines Frank", title: "Standortleitung Nord", primaryNodeId: N.filiale });
-    nodes[N.filiale].managerId = ines.id;
-
-    const petra = addEmployee({ id: uid("e"), name: "Petra Lange", title: "Schichtleitung Früh", primaryNodeId: N.teamFrueh });
-    nodes[N.teamFrueh].managerId = petra.id;
-
-    const stefan = addEmployee({ id: uid("e"), name: "Stefan Wolf", title: "Schichtleitung Spät", primaryNodeId: N.teamSpaet });
-    nodes[N.teamSpaet].managerId = stefan.id;
-
-    const juliaK = addEmployee({ id: uid("e"), name: "Julia Krause", title: "Projektleitung", primaryNodeId: N.projekt });
-    nodes[N.projekt].managerId = juliaK.id;
-
-    const fabian = addEmployee({ id: uid("e"), name: "Fabian Schmitt", title: "IT-Support", primaryNodeId: N.it });
-    nodes[N.teamRollout].actingManager = { employeeId: fabian.id, startDate: "2026-06-15", endDate: "2026-11-30" };
-
-    // Временный Primary Override — сценарий C
-    const jonas = addEmployee({
-      id: uid("e"), name: "Jonas Weber", title: "Sachbearbeiter/in", primaryNodeId: N.verwaltung,
-      override: { originalNodeId: N.verwaltung, tempNodeId: N.teamRollout, startDate: "2026-06-15", endDate: "2026-11-30", active: true },
+    // Ольга — сотрудник администрации, временно ставший Primary в проекте (сценарий C)
+    addEmployee({
+      id: uid("e"), name: "Ольга Петрова", title: "Специалист по кадрам", primaryNodeId: N.admin,
+      override: { originalNodeId: N.admin, tempNodeId: N.project, startDate: "2026-09-01", endDate: "2027-03-31", active: true },
     });
 
-    // Секонд.-связи с временным проектом (сохраняют постоянную принадлежность)
-    const mara = addEmployee({ id: uid("e"), name: "Mara Fischer", title: "Pflegefachkraft", primaryNodeId: N.pflege, secondaryNodeIds: [N.teamRollout] });
-    const simonK = addEmployee({ id: uid("e"), name: "Simon Klein", title: "Pflegehelfer/in", primaryNodeId: N.pflege, secondaryNodeIds: [N.teamRollout] });
-    const laura = addEmployee({ id: uid("e"), name: "Laura Neumann", title: "IT-Support", primaryNodeId: N.it, secondaryNodeIds: [N.teamRollout] });
-    const david = addEmployee({ id: uid("e"), name: "David Schwarz", title: "Systemadministrator/in", primaryNodeId: N.it, secondaryNodeIds: [N.teamRollout] });
+    // Отдел продаж — намеренно БЕЗ руководителя (демонстрация предупреждения)
+    addEmployee({ id: uid("e"), name: "Дмитрий Волков", title: "Менеджер по продажам", primaryNodeId: N.sales });
+    addEmployee({ id: uid("e"), name: "Анна Кузнецова", title: "Менеджер по продажам", primaryNodeId: N.sales });
+
+    const sergey = addEmployee({ id: uid("e"), name: "Сергей Иванов", title: "Начальник производства", primaryNodeId: N.production });
+    nodes[N.production].managerId = sergey.id;
+
+    const pavel = addEmployee({ id: uid("e"), name: "Павел Смирнов", title: "Бригадир", primaryNodeId: N.brigade1 });
+    nodes[N.brigade1].managerId = pavel.id;
+
+    // Иван — постоянно в Бригаде 1, дополнительно (secondary) участвует в проекте
+    addEmployee({ id: uid("e"), name: "Иван Новиков", title: "Монтажник", primaryNodeId: N.brigade1, secondaryNodeIds: [N.project] });
+
+    const elena = addEmployee({ id: uid("e"), name: "Елена Морозова", title: "Руководитель проекта", primaryNodeId: N.project });
+    nodes[N.project].managerId = elena.id;
 
     // Smart Unassigned — сценарий F посевной пример
-    addEmployee({ id: uid("e"), name: "Lena Vogt", title: "Neu eingestellt", primaryNodeId: null, unassignedReason: "Neu eingestellt — noch keine Zuordnung" });
-
-    // Заполняем реалистичную численность
-    genEmployees(N.pflege, 7, ["Pflegefachkraft", "Pflegehelfer/in", "Betreuungskraft"]);
-    genEmployees(N.teamFrueh, 9, ["Pflegefachkraft (Früh)", "Pflegehelfer/in (Früh)"]);
-    genEmployees(N.teamSpaet, 9, ["Pflegefachkraft (Spät)", "Pflegehelfer/in (Spät)"]);
-    genEmployees(N.verwaltung, 8, ["Sachbearbeiter/in", "Buchhaltung", "Empfang"]);
-    genEmployees(N.personal, 6, ["Recruiter/in", "Personalsachbearbeiter/in"]);
-    genEmployees(N.it, 1, ["IT-Support"]);
-    genEmployees(N.filiale, 7, ["Pflegefachkraft", "Standortkoordination"]);
-    genEmployees(N.projekt, 1, ["Projektkoordination"]);
+    addEmployee({ id: uid("e"), name: "Мария Волкова", title: "Новый сотрудник", primaryNodeId: null, unassignedReason: "Только что принята — ещё не назначена" });
   }
   seed();
 
@@ -546,7 +516,7 @@
   const state = {
     selectedId: N.company,
     view: "split",
-    expanded: new Set([N.company, N.pflege, N.projekt]),
+    expanded: new Set([N.company, N.production, N.project]),
     query: "",
     mapZoom: 1,
   };
@@ -773,6 +743,15 @@
     row.appendChild(count);
 
     row.addEventListener("click", () => selectNode(id));
+    row.dataset.nodeId = id;
+    if (n.status !== "archived" && n.type !== "company") {
+      row.draggable = true;
+      row.addEventListener("dragstart", (ev) => onNodeDragStart(ev, id));
+      row.addEventListener("dragend", onDragEnd);
+    }
+    row.addEventListener("dragover", (ev) => onRowDragOver(ev, row, id));
+    row.addEventListener("dragleave", () => row.classList.remove("drop-target-active"));
+    row.addEventListener("drop", (ev) => onRowDrop(ev, row, id));
     wrap.appendChild(row);
 
     if (kids.length && state.expanded.has(id)) {
@@ -782,6 +761,166 @@
       wrap.appendChild(childWrap);
     }
     return wrap;
+  }
+
+  /* =========================================================
+     DRAG & DROP — тот же результат, что кнопки в карточке (§3 задания:
+     "drag-and-drop не должен быть единственным способом"), просто более
+     наглядный путь к тем же mutation-функциям (reparent/moveEmployeePrimary/
+     addSecondaryLink). Работает и для узлов дерева, и для карточек
+     сотрудников в списке справа.
+     ========================================================= */
+  const dragState = { type: null, id: null, validTargets: null };
+
+  function computeValidNodeTargets(nodeId) {
+    // No Cycles: сам узел и вся его дочерняя ветка исключены — иначе
+    // узел оказался бы внутри самого себя.
+    const forbidden = new Set(subtreeIds(nodeId));
+    return new Set(
+      activeNodesFlat()
+        .map((r) => r.id)
+        .filter((id) => nodes[id].status !== "archived" && !forbidden.has(id))
+    );
+  }
+  function computeValidEmployeeTargets(empId) {
+    // Собственное текущее (эффективное) место исключено — перетаскивание
+    // туда же было бы бессмысленным no-op'ом или задвоением через secondary.
+    const current = effectivePrimary(empId);
+    return new Set(activeNodesFlat().map((r) => r.id).filter((id) => nodes[id].status !== "archived" && id !== current));
+  }
+
+  function dragIndicatorEl() { return document.getElementById("dragIndicator"); }
+
+  function startDrag(type, id, label) {
+    dragState.type = type;
+    dragState.id = id;
+    dragState.validTargets = type === "node" ? computeValidNodeTargets(id) : computeValidEmployeeTargets(id);
+    document.body.classList.add("dnd-active");
+    document.querySelectorAll(".tree-row[data-node-id]").forEach((row) => {
+      const targetId = row.dataset.nodeId;
+      row.classList.toggle("drop-zone-valid", dragState.validTargets.has(targetId));
+      row.classList.toggle("drop-zone-invalid", !dragState.validTargets.has(targetId));
+    });
+    const el = dragIndicatorEl();
+    el.textContent = "✥ " + label;
+    el.classList.remove("hidden", "forbidden");
+  }
+
+  function endDrag() {
+    dragState.type = null;
+    dragState.id = null;
+    dragState.validTargets = null;
+    document.body.classList.remove("dnd-active");
+    document.querySelectorAll(".tree-row").forEach((row) => {
+      row.classList.remove("drop-zone-valid", "drop-zone-invalid", "drop-target-active", "is-dragging");
+    });
+    document.querySelectorAll(".person-row").forEach((row) => row.classList.remove("is-dragging"));
+    dragIndicatorEl().classList.add("hidden");
+  }
+
+  document.addEventListener("dragover", (ev) => {
+    if (!dragState.type) return;
+    const el = dragIndicatorEl();
+    el.style.left = ev.clientX + "px";
+    el.style.top = ev.clientY + "px";
+  });
+  // dragend всегда срабатывает на исходном элементе, даже если drop
+  // произошёл вне допустимой зоны или отменён — единая точка очистки.
+  function onDragEnd() { endDrag(); }
+
+  function onNodeDragStart(ev, nodeId) {
+    ev.stopPropagation();
+    ev.dataTransfer.effectAllowed = "move";
+    try { ev.dataTransfer.setData("text/plain", nodeId); } catch {}
+    ev.currentTarget.classList.add("is-dragging");
+    startDrag("node", nodeId, "Переносим: «" + nodes[nodeId].name + "»");
+  }
+  function onEmployeeDragStart(ev, empId) {
+    ev.stopPropagation();
+    ev.dataTransfer.effectAllowed = "move";
+    try { ev.dataTransfer.setData("text/plain", empId); } catch {}
+    ev.currentTarget.classList.add("is-dragging");
+    startDrag("employee", empId, "Переносим сотрудника: «" + employees[empId].name + "»");
+  }
+
+  function onRowDragOver(ev, row, targetId) {
+    if (!dragState.type) return; // не наш drag (например, файл извне) — не перехватываем
+    ev.preventDefault();
+    const valid = dragState.validTargets.has(targetId);
+    ev.dataTransfer.dropEffect = valid ? "move" : "none";
+    row.classList.toggle("drop-target-active", valid);
+    const el = dragIndicatorEl();
+    el.classList.toggle("forbidden", !valid);
+    if (dragState.type === "node") {
+      el.textContent = valid
+        ? "✥ Переносим: «" + nodes[dragState.id].name + "» → в «" + nodes[targetId].name + "»"
+        : "✕ Нельзя переместить «" + nodes[dragState.id].name + "» сюда (это его собственная ветка)";
+    } else {
+      el.textContent = "✥ Переносим сотрудника: «" + employees[dragState.id].name + "» → в «" + nodes[targetId].name + "»";
+    }
+  }
+
+  function onRowDrop(ev, row, targetId) {
+    if (!dragState.type) return;
+    ev.preventDefault();
+    row.classList.remove("drop-target-active");
+    const valid = dragState.validTargets.has(targetId);
+    const { type, id } = dragState;
+    endDrag();
+    if (!valid) return;
+    if (type === "node") {
+      if (nodes[id].parentId === targetId) return; // уже здесь — не даже не показываем подтверждение
+      openConfirmMoveNodeModal(id, targetId);
+    } else {
+      openConfirmMoveEmployeeModal(id, targetId);
+    }
+  }
+
+  function openConfirmMoveNodeModal(nodeId, targetId) {
+    const n = nodes[nodeId];
+    const target = nodes[targetId];
+    const childCount = subtreeIds(nodeId).length - 1;
+    const peopleCount = subtreeIds(nodeId).reduce((acc, sid) => acc + employeesPrimaryAt(sid).length, 0);
+    let body = "<p>Переместить «" + escapeHtml(n.name) + "» из «" + escapeHtml(nodes[n.parentId].name) + "» в «" + escapeHtml(target.name) + "»?</p>";
+    if (childCount > 0 || peopleCount > 0) {
+      body += '<div class="impact-box"><h4>Это затронет</h4><ul>' +
+        (childCount > 0 ? "<li>дочерних узлов: " + childCount + "</li>" : "") +
+        (peopleCount > 0 ? "<li>сотрудников (по основной принадлежности): " + peopleCount + "</li>" : "") +
+        "</ul><p style=\"margin:6px 0 0;\">Они переместятся вместе с «" + escapeHtml(n.name) + "» — принадлежность людей не изменится, изменится только положение ветки.</p></div>";
+    }
+    body += '<div class="btn-row"><button type="button" class="btn btn--primary" id="confirmBtn">Переместить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div>';
+    openModal("Подтвердите перемещение", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("confirmBtn").addEventListener("click", () => {
+      reparent(nodeId, targetId);
+      closeModal(); renderAll(); showToast("«" + n.name + "» перемещён в «" + target.name + "»");
+    });
+  }
+
+  function openConfirmMoveEmployeeModal(empId, targetId) {
+    const e = employees[empId];
+    const target = nodes[targetId];
+    const isOverrideActive = e.override && e.override.active;
+    const currentHome = isOverrideActive ? nodes[e.override.originalNodeId] : (e.primaryNodeId ? nodes[e.primaryNodeId] : null);
+    let body = "<p>Куда добавить «" + escapeHtml(e.name) + "» в «" + escapeHtml(target.name) + "»?</p>";
+    body += '<div class="impact-choice" id="choiceSecondary"><span class="impact-choice__icon">+</span><div><div class="impact-choice__title">Добавить как дополнительную связь</div><div class="impact-choice__desc">Основная принадлежность' + (currentHome ? " («" + escapeHtml(currentHome.name) + "»)" : "") + ' не изменится — это как дополнительное участие в проекте.</div></div></div>';
+    if (!isOverrideActive) {
+      body += '<div class="impact-choice impact-choice--danger" id="choicePrimary"><span class="impact-choice__icon">⇄</span><div><div class="impact-choice__title">Сделать основным подразделением</div><div class="impact-choice__desc">Полностью переместить «' + escapeHtml(e.name) + '» — прежнее место (' + (currentHome ? "«" + escapeHtml(currentHome.name) + "»" : "нет") + ") перестанет быть основным.</div></div></div>";
+    }
+    body += '<div class="btn-row"><button type="button" class="btn" id="cancelBtn">Отмена</button></div>';
+    openModal("Подтвердите перенос сотрудника", body, true);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("choiceSecondary").addEventListener("click", () => {
+      addSecondaryLink(empId, targetId);
+      closeModal(); renderAll(); showToast("«" + e.name + "» добавлен(а) в «" + target.name + "» как дополнительная связь");
+    });
+    const primaryChoice = document.getElementById("choicePrimary");
+    if (primaryChoice) {
+      primaryChoice.addEventListener("click", () => {
+        moveEmployeePrimary(empId, targetId);
+        closeModal(); renderAll(); showToast("«" + e.name + "» теперь основное подразделение — «" + target.name + "»");
+      });
+    }
   }
 
   /* =========================================================
@@ -869,7 +1008,9 @@
   }
 
   function personRow(e, nodeId, kind) {
-    let html = '<div class="person-row">';
+    const isOverrideHere = e.override && e.override.active && e.override.tempNodeId === nodeId;
+    const draggableAttr = kind === "primary" && !isOverrideHere ? ' draggable="true" data-emp-id="' + e.id + '"' : "";
+    let html = '<div class="person-row"' + draggableAttr + ">";
     html += '<div class="avatar">' + initials(e.name) + "</div>";
     html += '<div><div class="person-row__name">' + escapeHtml(e.name) + '</div><div class="person-row__title">' + escapeHtml(e.title || "") + "</div></div>";
     html += '<div class="person-row__tags">';
@@ -919,6 +1060,10 @@
      ========================================================= */
   function bindDetailHandlers(n) {
     const pane = document.getElementById("detailPane");
+    pane.querySelectorAll("[data-emp-id]").forEach((row) => {
+      row.addEventListener("dragstart", (ev) => onEmployeeDragStart(ev, row.dataset.empId));
+      row.addEventListener("dragend", onDragEnd);
+    });
     pane.querySelectorAll("[data-act]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const act = btn.dataset.act;
@@ -991,7 +1136,7 @@
   function openAddNodeModal(parentId, presetType) {
     const body =
       '<form id="f">' +
-      '<div class="field"><label>Название</label><input type="text" name="name" required placeholder="например, Team Nachtdienst"></div>' +
+      '<div class="field"><label>Название</label><input type="text" name="name" required placeholder="например, Бригада 2"></div>' +
       '<div class="field"><label>Тип</label><select name="type">' +
       Object.keys(TYPE_LABEL).filter((t) => t !== "company").map((t) => '<option value="' + t + '"' + (t === presetType ? " selected" : "") + ">" + TYPE_LABEL[t] + "</option>").join("") +
       "</select></div>" +
@@ -1087,7 +1232,7 @@
   function openAddEmployeeModal(nodeId) {
     const body =
       '<form id="f"><div class="field"><label>Имя</label><input type="text" name="name" required placeholder="Имя Фамилия"></div>' +
-      '<div class="field"><label>Должность</label><input type="text" name="title" placeholder="например, Pflegefachkraft"></div>' +
+      '<div class="field"><label>Должность</label><input type="text" name="title" placeholder="например, Менеджер по продажам"></div>' +
       (nodeId ? "" : '<p class="field-hint">Сотрудник будет создан без основной принадлежности и появится в «Требуют назначения».</p>') +
       '<div class="btn-row"><button type="submit" class="btn btn--primary">Добавить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
     openModal(nodeId ? "Новый сотрудник — «" + nodes[nodeId].name + "»" : "Новый сотрудник без назначения", body);
@@ -1177,10 +1322,10 @@
     body += '<div class="impact-box"><h4>Затронутые сотрудники (' + affectedEmployees.length + ")</h4>";
     body += affectedEmployees.length ? "<ul>" + affectedEmployees.map((e) => "<li>" + escapeHtml(e.name) + "</li>").join("") + "</ul>" : '<p style="margin:0;color:var(--ink-faint);">Нет</p>';
     body += "</div>";
-    body += '<div class="impact-choice impact-choice--danger" id="choiceArchive"><span class="impact-choice__icon">🗄</span><div><div class="impact-choice__title">Archive subtree</div><div class="impact-choice__desc">Архивировать «' + escapeHtml(n.name) + '» и всю дочернюю ветку целиком. Сотрудники без другого места попадут в «Требуют назначения».</div></div></div>';
-    body += '<div class="impact-choice" id="choiceReparent"><span class="impact-choice__icon">↥</span><div><div class="impact-choice__title">Reparent children</div><div class="impact-choice__desc">Дочерние узлы переносятся на уровень выше (к родителю «' + escapeHtml(nodes[n.parentId].name) + '»), продолжают работать. Архивируется только сам «' + escapeHtml(n.name) + '».</div></div></div>';
-    body += '<div class="btn-row"><button type="button" class="btn" id="cancelBtn">Cancel</button></div>';
-    openModal("Impact Preview — закрытие «" + n.name + "»", body, true);
+    body += '<div class="impact-choice impact-choice--danger" id="choiceArchive"><span class="impact-choice__icon">🗄</span><div><div class="impact-choice__title">Архивировать всю ветку</div><div class="impact-choice__desc">Архивировать «' + escapeHtml(n.name) + '» и всю дочернюю ветку целиком. Сотрудники без другого места попадут в «Требуют назначения».</div></div></div>';
+    body += '<div class="impact-choice" id="choiceReparent"><span class="impact-choice__icon">↥</span><div><div class="impact-choice__title">Перенести дочерние подразделения</div><div class="impact-choice__desc">Дочерние узлы переносятся на уровень выше (к родителю «' + escapeHtml(nodes[n.parentId].name) + '»), продолжают работать. Архивируется только сам «' + escapeHtml(n.name) + '».</div></div></div>';
+    body += '<div class="btn-row"><button type="button" class="btn" id="cancelBtn">Отмена</button></div>';
+    openModal("Предварительный просмотр последствий — закрытие «" + n.name + "»", body, true);
     document.getElementById("cancelBtn").addEventListener("click", closeModal);
     document.getElementById("choiceArchive").addEventListener("click", () => { archiveSubtree(id); state.selectedId = nodes[id].parentId; closeModal(); renderAll(); showToast("Структура архивирована"); });
     document.getElementById("choiceReparent").addEventListener("click", () => { reparentChildrenThenArchive(id); state.selectedId = nodes[id].parentId; closeModal(); renderAll(); showToast("Дочерние узлы перенесены, узел архивирован"); });
