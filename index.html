@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Lindenhof Org Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #1c2333;
+    --ink-soft: #5b6478;
+    --ink-faint: #8991a3;
+    --paper: #f4f6fa;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --border: #dfe3ec;
+    --border-strong: #c7cddb;
+
+    --accent: #2e4a7d;
+    --accent-soft: #e7ecf6;
+
+    --temp: #9a5b1e;
+    --temp-soft: #f6ead9;
+
+    --unassigned: #6b5b95;
+    --unassigned-soft: #efeaf7;
+
+    --good: #1f7a4c;
+    --good-soft: #e5f4ec;
+    --warn: #b8860b;
+    --warn-soft: #faf1d9;
+    --danger: #b02a2a;
+    --danger-soft: #fbe9e9;
+
+    --shadow: 0 1px 2px rgba(28,35,51,0.04), 0 6px 20px rgba(28,35,51,0.07);
+    --radius: 10px;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8ebf3;
+      --ink-soft: #a7aec2;
+      --ink-faint: #767e93;
+      --paper: #12151f;
+      --surface: #191d2a;
+      --surface-raised: #1f2433;
+      --border: #2b3143;
+      --border-strong: #3a4258;
+
+      --accent: #7ea0e8;
+      --accent-soft: #202c47;
+      --temp: #d99a52;
+      --temp-soft: #3a2c19;
+      --unassigned: #b4a3e0;
+      --unassigned-soft: #2c2640;
+      --good: #5fbf8c;
+      --good-soft: #17301f;
+      --warn: #e0b23d;
+      --warn-soft: #362c11;
+      --danger: #e08080;
+      --danger-soft: #3a1c1c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 24px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e8ebf3; --ink-soft: #a7aec2; --ink-faint: #767e93;
+    --paper: #12151f; --surface: #191d2a; --surface-raised: #1f2433;
+    --border: #2b3143; --border-strong: #3a4258;
+    --accent: #7ea0e8; --accent-soft: #202c47;
+    --temp: #d99a52; --temp-soft: #3a2c19;
+    --unassigned: #b4a3e0; --unassigned-soft: #2c2640;
+    --good: #5fbf8c; --good-soft: #17301f;
+    --warn: #e0b23d; --warn-soft: #362c11;
+    --danger: #e08080; --danger-soft: #3a1c1c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ::selection { background: var(--accent-soft); }
+
+  .app { display: flex; flex-direction: column; height: 100vh; min-height: 640px; }
+
+  /* ---------------- Top bar ---------------- */
+  .topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .brand__mark {
+    width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
+    font-weight: 600; font-size: 15px; flex-shrink: 0;
+  }
+  .brand__name { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+  .brand__sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; }
+
+  .search-box {
+    flex: 1; max-width: 380px; position: relative;
+  }
+  .search-box input {
+    width: 100%; padding: 8px 12px 8px 32px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--paper); color: var(--ink);
+  }
+  .search-box input:focus { background: var(--surface); }
+  .search-box::before {
+    content: "⌕"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-faint); font-size: 15px;
+  }
+  .search-hint { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: 4px; z-index: 30; max-height: 260px; overflow-y: auto; }
+  .search-hint__item { padding: 7px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .search-hint__item:hover { background: var(--accent-soft); }
+  .search-hint__meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-left: auto; }
+
+  .view-toggle { display: flex; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+  .view-toggle button {
+    border: none; background: transparent; padding: 6px 13px; border-radius: 6px; font-weight: 500; color: var(--ink-soft); cursor: pointer;
+  }
+  .view-toggle button.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+  .topbar__warnings { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; white-space: nowrap; border: 1px solid transparent;
+  }
+  .chip--warn { background: var(--warn-soft); color: var(--warn); }
+  .chip--accent { background: var(--accent-soft); color: var(--accent); }
+  .chip--temp { background: var(--temp-soft); color: var(--temp); }
+  .chip--good { background: var(--good-soft); color: var(--good); }
+  .chip--danger { background: var(--danger-soft); color: var(--danger); }
+  .chip--unassigned { background: var(--unassigned-soft); color: var(--unassigned); }
+  .chip--outline { background: transparent; border-color: var(--border-strong); color: var(--ink-soft); }
+
+  /* ---------------- Buttons ---------------- */
+  .btn {
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+    padding: 7px 14px; border-radius: 8px; font-weight: 500; cursor: pointer; line-height: 1.3;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .btn:hover { background: var(--paper); }
+  .btn--sm { padding: 5px 10px; font-size: 12.5px; border-radius: 7px; }
+  .btn--xs { padding: 3px 8px; font-size: 11.5px; border-radius: 6px; }
+  .btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn--primary:hover { filter: brightness(1.08); }
+  .btn--danger { border-color: var(--danger); color: var(--danger); background: transparent; }
+  .btn--danger:hover { background: var(--danger-soft); }
+  .btn--ghost { border-color: transparent; background: transparent; }
+  .btn--ghost:hover { background: var(--paper); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ---------------- Split view ---------------- */
+  .split { flex: 1; display: flex; min-height: 0; }
+  .tree-pane {
+    width: 340px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--paper);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .tree-pane__head { padding: 12px 14px 8px; flex-shrink: 0; }
+  .tree-pane__head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 600; margin: 0 0 2px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
+  .tree-scroll { flex: 1; overflow-y: auto; padding: 4px 8px 20px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 10px; font-size: 11px; color: var(--ink-soft); }
+  .legend__dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+
+  .tree-node { margin: 1px 0; }
+  .tree-row {
+    display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 7px; cursor: pointer;
+    border: 1px solid transparent; position: relative;
+  }
+  .tree-row:hover { background: var(--surface); }
+  .tree-row.selected { background: var(--accent-soft); border-color: var(--accent); }
+  .tree-row.match { box-shadow: inset 0 0 0 1px var(--warn); }
+  .tree-row .twisty {
+    width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint); border-radius: 4px; font-size: 10px;
+  }
+  .tree-row .twisty:hover { background: var(--border); }
+  .tree-row .twisty.empty { visibility: hidden; }
+  .node-swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .node-swatch.perm { background: var(--accent); }
+  .node-swatch.temp { background: var(--temp); border-radius: 50%; }
+  .node-swatch.archived { background: var(--ink-faint); }
+  .tree-row__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .tree-row.is-archived .tree-row__label { text-decoration: line-through; color: var(--ink-faint); font-weight: 400; }
+  .tree-row__badge { font-size: 9.5px; font-family: var(--font-mono); color: var(--ink-faint); flex-shrink: 0; }
+  .tree-row__warn { color: var(--warn); font-size: 12px; flex-shrink: 0; }
+  .tree-children { margin-left: 17px; border-left: 1px dashed var(--border-strong); padding-left: 3px; }
+  .tree-node.is-temp > .tree-row .tree-row__label { color: var(--temp); }
+
+  .unassigned-pin {
+    margin: 2px 0 10px;
+  }
+  .unassigned-pin .tree-row { background: var(--unassigned-soft); border: 1px dashed var(--unassigned); }
+  .unassigned-pin .tree-row.selected { background: var(--unassigned-soft); box-shadow: 0 0 0 2px var(--unassigned) inset; }
+  .unassigned-pin .tree-row__label { color: var(--unassigned); font-weight: 600; }
+  .count-pill {
+    background: var(--surface); border-radius: 999px; padding: 1px 7px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); flex-shrink:0;
+  }
+
+  /* ---------------- Detail pane ---------------- */
+  .detail-pane { flex: 1; overflow-y: auto; padding: 26px 32px 60px; min-width: 0; }
+  .detail-card { max-width: 760px; margin: 0 auto; }
+  .detail-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .detail-title { font-family: var(--font-display); font-size: 30px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; letter-spacing: -0.01em; }
+  .detail-sub { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 20px; }
+  .detail-sub b { color: var(--ink); font-weight: 600; }
+
+  .warn-banner {
+    display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border-radius: 9px;
+    background: var(--warn-soft); color: #6b5308; border: 1px solid transparent; margin-bottom: 16px; font-size: 13px;
+  }
+  :root[data-theme="dark"] .warn-banner, @media (prefers-color-scheme: dark) { }
+  .warn-banner strong { display: block; margin-bottom: 1px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 24px; margin-bottom: 22px; }
+  .info-item__label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin-bottom: 3px; }
+  .info-item__value { font-size: 14.5px; font-weight: 500; }
+  .info-item__value.muted { color: var(--ink-faint); font-weight: 400; font-style: italic; }
+  .info-item__value .btn--xs { margin-left: 8px; }
+  .date-range { font-family: var(--font-mono); font-size: 13px; }
+
+  .section-block { margin-bottom: 26px; }
+  .section-block__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+  .section-block__head h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0; }
+
+  .actions-panel { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 22px; }
+
+  .people-list { display: flex; flex-direction: column; gap: 6px; }
+  .person-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0;
+  }
+  .person-row__name { font-weight: 500; }
+  .person-row__title { color: var(--ink-faint); font-size: 12px; }
+  .person-row__tags { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; align-items: center; }
+  .person-row__actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .empty-note { color: var(--ink-faint); font-size: 13px; padding: 10px 2px; font-style: italic; }
+
+  /* Unassigned detail */
+  .unassigned-person-row { flex-direction: column; align-items: stretch; gap: 6px; }
+  .unassigned-person-row__top { display: flex; align-items: center; gap: 10px; }
+  .unassigned-person-row__reason { font-size: 12px; color: var(--unassigned); background: var(--unassigned-soft); padding: 4px 9px; border-radius: 6px; }
+
+  /* ---------------- Modal ---------------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,18,28,0.44); display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px; backdrop-filter: blur(1px);
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); width: 100%; max-width: 460px;
+    max-height: calc(100vh - 60px); overflow-y: auto; padding: 22px 24px 24px;
+  }
+  .modal.modal--wide { max-width: 620px; }
+  .modal__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; gap: 12px; }
+  .modal__title { font-family: var(--font-display); font-size: 19px; font-weight: 600; margin: 0; text-wrap: balance; }
+  .modal__close { border: none; background: none; font-size: 20px; line-height: 1; color: var(--ink-faint); cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+  .modal__close:hover { background: var(--paper); }
+  .modal__body { margin-top: 14px; }
+  .modal__body p { margin: 0 0 12px; color: var(--ink-soft); font-size: 13.5px; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; color: var(--ink-soft); }
+  .field input[type="text"], .field input[type="date"], .field select, .field textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--paper); color: var(--ink);
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .checkbox-field { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .checkbox-field input { width: 16px; height: 16px; }
+  .checkbox-field label { margin: 0; font-size: 13px; color: var(--ink); }
+  .field-hint { font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; }
+
+  .impact-box { background: var(--paper); border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; margin-bottom: 12px; }
+  .impact-box h4 { margin: 0 0 8px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+  .impact-box ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .impact-box li { margin-bottom: 3px; }
+  .impact-choice {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--border-strong);
+    border-radius: 10px; margin-bottom: 10px; cursor: pointer; background: var(--surface);
+  }
+  .impact-choice:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .impact-choice--danger:hover { border-color: var(--danger); background: var(--danger-soft); }
+  .impact-choice__icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .impact-choice__title { font-weight: 600; margin-bottom: 2px; }
+  .impact-choice__desc { font-size: 12.5px; color: var(--ink-soft); }
+
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper);
+    padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow); z-index: 200;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  :root[data-theme="dark"] .toast, @media (prefers-color-scheme: dark) { }
+  .toast.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 8px); }
+
+  /* ---------------- Org Map ---------------- */
+  .map-view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .map-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .map-canvas-wrap { flex: 1; overflow: auto; background: var(--paper); background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 22px 22px; position: relative; }
+  .map-canvas { position: relative; transform-origin: top left; padding: 60px; }
+  .map-block {
+    position: absolute; width: 168px; padding: 10px 12px; border-radius: 9px; background: var(--surface);
+    border: 1.5px solid var(--accent); box-shadow: var(--shadow); cursor: pointer; transition: transform .1s ease;
+  }
+  .map-block:hover { transform: translateY(-2px); }
+  .map-block.selected { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+  .map-block.is-temp { border-style: dashed; border-color: var(--temp); }
+  .map-block.is-archived { border-color: var(--ink-faint); opacity: .55; }
+  .map-block__type { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin-bottom: 3px; }
+  .map-block__name { font-weight: 600; font-size: 13px; line-height: 1.25; margin-bottom: 4px; text-wrap: balance; }
+  .map-block__meta { font-size: 11px; color: var(--ink-soft); display: flex; align-items: center; gap: 5px; }
+  .map-legend { margin-left: auto; display: flex; gap: 14px; font-size: 12px; color: var(--ink-soft); }
+
+  .hidden { display: none !important; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  @media (max-width: 860px) {
+    .tree-pane { width: 260px; }
+    .detail-pane { padding: 20px 16px 60px; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand__mark">L</div>
+      <div>
+        <div class="brand__name">Lindenhof Pflegedienste</div>
+        <div class="brand__sub">Org Builder · Prototyp</div>
+      </div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Отдел, проект или сотрудник…" autocomplete="off">
+      <div class="search-hint hidden" id="searchHint"></div>
+    </div>
+    <div class="view-toggle">
+      <button id="btnViewSplit" class="active">Рабочий вид</button>
+      <button id="btnViewMap">Org Map</button>
+    </div>
+    <div class="topbar__warnings" id="topbarWarnings"></div>
+  </div>
+
+  <div class="split" id="splitView">
+    <div class="tree-pane">
+      <div class="tree-pane__head"><h2>Структура компании</h2></div>
+      <div class="legend">
+        <span><span class="legend__dot" style="background:var(--accent)"></span>Постоянная</span>
+        <span><span class="legend__dot" style="background:var(--temp)"></span>Временная</span>
+        <span><span class="legend__dot" style="background:var(--ink-faint)"></span>Архив</span>
+      </div>
+      <div class="tree-scroll" id="treeScroll"></div>
+    </div>
+    <div class="detail-pane" id="detailPane"></div>
+  </div>
+
+  <div class="map-view hidden" id="mapView">
+    <div class="map-toolbar">
+      <button class="btn btn--sm" id="mapZoomOut">−</button>
+      <span class="chip chip--outline" id="mapZoomLabel">100%</span>
+      <button class="btn btn--sm" id="mapZoomIn">+</button>
+      <button class="btn btn--sm" id="mapReset">Сбросить вид</button>
+      <div class="map-legend">
+        <span><span class="legend__dot" style="background:var(--accent)"></span>Постоянная структура</span>
+        <span><span class="legend__dot" style="background:var(--temp);border-radius:50%"></span>Временная структура</span>
+      </div>
+      <button class="btn btn--primary btn--sm" id="mapBackBtn" style="margin-left:auto;">← Вернуться в рабочий вид</button>
+    </div>
+    <div class="map-canvas-wrap" id="mapCanvasWrap">
+      <div class="map-canvas" id="mapCanvas"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal__head">
+      <h3 class="modal__title" id="modalTitle">Заголовок</h3>
+      <button class="modal__close" id="modalCloseBtn">×</button>
+    </div>
+    <div class="modal__body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     ДАННЫЕ
+     ========================================================= */
+  let seq = 1;
+  function uid(prefix) { return prefix + "_" + (seq++); }
+
+  const nodes = {};
+  const employees = {};
+
+  function addNode(n) {
+    nodes[n.id] = Object.assign({
+      status: "active", managerId: null, actingManager: null,
+      startDate: null, endDate: null, isTemporary: false, order: Object.keys(nodes).length,
+    }, n);
+    return nodes[n.id];
+  }
+  function addEmployee(e) {
+    employees[e.id] = Object.assign({
+      primaryNodeId: null, secondaryNodeIds: [], override: null, unassignedReason: null,
+    }, e);
+    return employees[e.id];
+  }
+
+  const N = {
+    company: "n_company", pflege: "n_pflege", verwaltung: "n_verwaltung", personal: "n_personal",
+    it: "n_it", filiale: "n_filiale", teamFrueh: "n_team_frueh", teamSpaet: "n_team_spaet",
+    projekt: "n_projekt", teamRollout: "n_team_rollout",
+  };
+
+  function seed() {
+    addNode({ id: N.company, name: "Lindenhof Pflegedienste", type: "company", parentId: null });
+    addNode({ id: N.pflege, name: "Pflege & Betreuung", type: "department", parentId: N.company });
+    addNode({ id: N.verwaltung, name: "Verwaltung", type: "department", parentId: N.company });
+    addNode({ id: N.personal, name: "Personal & Recruiting", type: "department", parentId: N.company });
+    addNode({ id: N.it, name: "IT & Digitalisierung", type: "department", parentId: N.company });
+    addNode({ id: N.filiale, name: "Filiale Nord", type: "branch", parentId: N.company });
+    addNode({ id: N.teamFrueh, name: "Team Frühdienst", type: "team", parentId: N.pflege });
+    addNode({ id: N.teamSpaet, name: "Team Spätdienst", type: "team", parentId: N.pflege });
+    addNode({
+      id: N.projekt, name: "Projekt Digitale Pflegedokumentation", type: "project", parentId: N.company,
+      isTemporary: true, startDate: "2026-06-01", endDate: "2026-12-31",
+    });
+    addNode({
+      id: N.teamRollout, name: "Rollout-Team Ost", type: "team", parentId: N.projekt,
+      isTemporary: true, startDate: "2026-06-15", endDate: "2026-11-30",
+    });
+
+    const firstNames = ["Anna","Lukas","Mara","Jonas","Sophie","Felix","Lena","Paul","Nina","Tobias","Julia","Simon","Laura","David","Hannah","Jan","Clara","Tim","Sarah","Max","Elena","Niklas","Marie","Fabian","Katja","Oliver","Petra","Stefan","Ines","Dennis","Robert","Sabine","Frank","Nadine","Peter"];
+    const lastNames = ["Weber","Schmidt","Fischer","Meyer","Wagner","Becker","Hoffmann","Schulz","Koch","Richter","Klein","Wolf","Neumann","Schwarz","Zimmermann","Braun","Krüger","Hartmann","Lange","Werner","Krause","Lehmann","Schmitt","Schäfer","Vogel","Fuchs","Keller","Günther","Frank","Berger","Vogt","Peters","Sommer","Horn","Busch"];
+    let nameCursor = 0;
+    function nextName() {
+      const f = firstNames[nameCursor % firstNames.length];
+      const l = lastNames[Math.floor(nameCursor / firstNames.length) % lastNames.length];
+      nameCursor++;
+      return f + " " + l;
+    }
+
+    function genEmployees(nodeId, count, titles) {
+      const out = [];
+      for (let i = 0; i < count; i++) {
+        const e = addEmployee({
+          id: uid("e"), name: nextName(), title: titles[i % titles.length], primaryNodeId: nodeId,
+        });
+        out.push(e);
+      }
+      return out;
+    }
+
+    // Явно поименованные ключевые сотрудники (руководители и особые сценарии)
+    const thomas = addEmployee({ id: uid("e"), name: "Thomas Vogt", title: "Geschäftsführer", primaryNodeId: N.company });
+    nodes[N.company].managerId = thomas.id;
+
+    const renate = addEmployee({ id: uid("e"), name: "Renate Hoffmann", title: "Bereichsleitung Pflege", primaryNodeId: N.pflege });
+    nodes[N.pflege].managerId = renate.id;
+
+    const karl = addEmployee({ id: uid("e"), name: "Karl Becker", title: "Leitung Verwaltung", primaryNodeId: N.verwaltung });
+    nodes[N.verwaltung].managerId = karl.id;
+
+    // Personal & Recruiting — намеренно БЕЗ руководителя (демонстрация warning)
+
+    const dennis = addEmployee({ id: uid("e"), name: "Dennis Krüger", title: "IT-Leitung", primaryNodeId: N.it });
+    nodes[N.it].managerId = dennis.id;
+
+    const ines = addEmployee({ id: uid("e"), name: "Ines Frank", title: "Standortleitung Nord", primaryNodeId: N.filiale });
+    nodes[N.filiale].managerId = ines.id;
+
+    const petra = addEmployee({ id: uid("e"), name: "Petra Lange", title: "Schichtleitung Früh", primaryNodeId: N.teamFrueh });
+    nodes[N.teamFrueh].managerId = petra.id;
+
+    const stefan = addEmployee({ id: uid("e"), name: "Stefan Wolf", title: "Schichtleitung Spät", primaryNodeId: N.teamSpaet });
+    nodes[N.teamSpaet].managerId = stefan.id;
+
+    const juliaK = addEmployee({ id: uid("e"), name: "Julia Krause", title: "Projektleitung", primaryNodeId: N.projekt });
+    nodes[N.projekt].managerId = juliaK.id;
+
+    const fabian = addEmployee({ id: uid("e"), name: "Fabian Schmitt", title: "IT-Support", primaryNodeId: N.it });
+    nodes[N.teamRollout].actingManager = { employeeId: fabian.id, startDate: "2026-06-15", endDate: "2026-11-30" };
+
+    // Временный Primary Override — сценарий C
+    const jonas = addEmployee({
+      id: uid("e"), name: "Jonas Weber", title: "Sachbearbeiter/in", primaryNodeId: N.verwaltung,
+      override: { originalNodeId: N.verwaltung, tempNodeId: N.teamRollout, startDate: "2026-06-15", endDate: "2026-11-30", active: true },
+    });
+
+    // Секонд.-связи с временным проектом (сохраняют постоянную принадлежность)
+    const mara = addEmployee({ id: uid("e"), name: "Mara Fischer", title: "Pflegefachkraft", primaryNodeId: N.pflege, secondaryNodeIds: [N.teamRollout] });
+    const simonK = addEmployee({ id: uid("e"), name: "Simon Klein", title: "Pflegehelfer/in", primaryNodeId: N.pflege, secondaryNodeIds: [N.teamRollout] });
+    const laura = addEmployee({ id: uid("e"), name: "Laura Neumann", title: "IT-Support", primaryNodeId: N.it, secondaryNodeIds: [N.teamRollout] });
+    const david = addEmployee({ id: uid("e"), name: "David Schwarz", title: "Systemadministrator/in", primaryNodeId: N.it, secondaryNodeIds: [N.teamRollout] });
+
+    // Smart Unassigned — сценарий F посевной пример
+    addEmployee({ id: uid("e"), name: "Lena Vogt", title: "Neu eingestellt", primaryNodeId: null, unassignedReason: "Neu eingestellt — noch keine Zuordnung" });
+
+    // Заполняем реалистичную численность
+    genEmployees(N.pflege, 7, ["Pflegefachkraft", "Pflegehelfer/in", "Betreuungskraft"]);
+    genEmployees(N.teamFrueh, 9, ["Pflegefachkraft (Früh)", "Pflegehelfer/in (Früh)"]);
+    genEmployees(N.teamSpaet, 9, ["Pflegefachkraft (Spät)", "Pflegehelfer/in (Spät)"]);
+    genEmployees(N.verwaltung, 8, ["Sachbearbeiter/in", "Buchhaltung", "Empfang"]);
+    genEmployees(N.personal, 6, ["Recruiter/in", "Personalsachbearbeiter/in"]);
+    genEmployees(N.it, 1, ["IT-Support"]);
+    genEmployees(N.filiale, 7, ["Pflegefachkraft", "Standortkoordination"]);
+    genEmployees(N.projekt, 1, ["Projektkoordination"]);
+  }
+  seed();
+
+  /* =========================================================
+     СОСТОЯНИЕ
+     ========================================================= */
+  const state = {
+    selectedId: N.company,
+    view: "split",
+    expanded: new Set([N.company, N.pflege, N.projekt]),
+    query: "",
+    mapZoom: 1,
+  };
+  const UNASSIGNED = "__UNASSIGNED__";
+  const DEEP_WARN_DEPTH = 3;
+
+  const TYPE_LABEL = { company: "Компания", department: "Отдел", branch: "Филиал", team: "Бригада/команда", project: "Проект" };
+
+  /* =========================================================
+     ХЕЛПЕРЫ ДАННЫХ
+     ========================================================= */
+  function allNodes() { return Object.values(nodes); }
+  function allEmployees() { return Object.values(employees); }
+  function childrenOf(parentId) {
+    return allNodes().filter((n) => n.parentId === parentId).sort((a, b) => a.order - b.order);
+  }
+  function depthOf(id) {
+    let d = 0, cur = nodes[id];
+    while (cur && cur.parentId) { d++; cur = nodes[cur.parentId]; }
+    return d;
+  }
+  function subtreeIds(rootId) {
+    const out = [rootId];
+    childrenOf(rootId).forEach((c) => out.push(...subtreeIds(c.id)));
+    return out;
+  }
+  function isSelfOrDescendant(rootId, candidateId) { return subtreeIds(rootId).includes(candidateId); }
+  function ancestorsOf(id) {
+    const out = []; let cur = nodes[id] && nodes[id].parentId ? nodes[nodes[id].parentId] : null;
+    while (cur) { out.push(cur.id); cur = cur.parentId ? nodes[cur.parentId] : null; }
+    return out;
+  }
+  function effectivePrimary(empId) {
+    const e = employees[empId];
+    if (!e) return null;
+    if (e.override && e.override.active) return e.override.tempNodeId;
+    return e.primaryNodeId;
+  }
+  function employeesPrimaryAt(nodeId) { return allEmployees().filter((e) => effectivePrimary(e.id) === nodeId); }
+  function employeesSecondaryAt(nodeId) { return allEmployees().filter((e) => e.secondaryNodeIds.includes(nodeId)); }
+  function unassignedEmployees() { return allEmployees().filter((e) => effectivePrimary(e.id) === null); }
+  function hasManager(n) { return !!(n.managerId || (n.actingManager && n.actingManager.employeeId)); }
+  function nodeHeadcount(nodeId) { return employeesPrimaryAt(nodeId).length + employeesSecondaryAt(nodeId).length; }
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" });
+  }
+  function initials(name) { return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase(); }
+  function activeNodesFlat() {
+    const out = [];
+    (function walk(id, depth) {
+      out.push({ id, depth });
+      childrenOf(id).forEach((c) => walk(c.id, depth + 1));
+    })(N.company, 0);
+    return out;
+  }
+
+  /* =========================================================
+     МУТАЦИИ / ДЕЙСТВИЯ
+     ========================================================= */
+  function addChildNode({ parentId, name, type, isTemporary, startDate, endDate }) {
+    const id = uid("n");
+    addNode({ id, name, type, parentId, isTemporary: !!isTemporary, startDate: startDate || null, endDate: endDate || null, order: Date.now() });
+    return id;
+  }
+  function renameNode(id, name) { nodes[id].name = name; }
+  function changeType(id, type) { nodes[id].type = type; }
+  function setManager(id, employeeId) { nodes[id].managerId = employeeId || null; }
+  function setActingManager(id, employeeId, startDate, endDate) {
+    nodes[id].actingManager = employeeId ? { employeeId, startDate: startDate || null, endDate: endDate || null } : null;
+  }
+  function clearActingManager(id) { nodes[id].actingManager = null; }
+  function moveEmployeePrimary(empId, nodeId) {
+    const e = employees[empId];
+    e.primaryNodeId = nodeId;
+    e.unassignedReason = null;
+    if (!(e.override && e.override.active)) { /* effective changes immediately */ }
+  }
+  function addSecondaryLink(empId, nodeId) {
+    const e = employees[empId];
+    if (!e.secondaryNodeIds.includes(nodeId)) e.secondaryNodeIds.push(nodeId);
+  }
+  function removeSecondaryLink(empId, nodeId) {
+    const e = employees[empId];
+    e.secondaryNodeIds = e.secondaryNodeIds.filter((id) => id !== nodeId);
+  }
+  function startOverride(empId, tempNodeId, startDate, endDate) {
+    const e = employees[empId];
+    e.override = { originalNodeId: e.primaryNodeId, tempNodeId, startDate: startDate || null, endDate: endDate || null, active: true };
+  }
+  function endOverride(empId) {
+    const e = employees[empId];
+    e.override = null;
+  }
+  function reparent(nodeId, newParentId) { nodes[nodeId].parentId = newParentId; }
+  function createEmployee({ name, title, primaryNodeId, reason }) {
+    const id = uid("e");
+    addEmployee({ id, name, title, primaryNodeId: primaryNodeId || null, unassignedReason: primaryNodeId ? null : (reason || "Ещё не назначен") });
+    return id;
+  }
+  function assignFromUnassigned(empId, nodeId) {
+    const e = employees[empId];
+    e.primaryNodeId = nodeId;
+    e.unassignedReason = null;
+  }
+  function archiveSubtree(rootId) {
+    const ids = subtreeIds(rootId);
+    ids.forEach((id) => { nodes[id].status = "archived"; });
+    allEmployees().forEach((e) => {
+      if (e.override && e.override.active && ids.includes(e.override.tempNodeId)) e.override = null;
+      if (e.primaryNodeId && ids.includes(e.primaryNodeId)) {
+        e.unassignedReason = "Структура «" + nodes[rootId].name + "» была закрыта";
+        e.primaryNodeId = null;
+      }
+      e.secondaryNodeIds = e.secondaryNodeIds.filter((sid) => !ids.includes(sid));
+    });
+  }
+  function reparentChildrenThenArchive(nodeId) {
+    const parentId = nodes[nodeId].parentId;
+    childrenOf(nodeId).forEach((c) => { c.parentId = parentId; });
+    nodes[nodeId].status = "archived";
+    allEmployees().forEach((e) => {
+      if (e.override && e.override.active && e.override.tempNodeId === nodeId) e.override = null;
+      if (e.primaryNodeId === nodeId) {
+        e.unassignedReason = "Узел «" + nodes[nodeId].name + "» был закрыт (дочерние подразделения сохранены)";
+        e.primaryNodeId = null;
+      }
+      e.secondaryNodeIds = e.secondaryNodeIds.filter((sid) => sid !== nodeId);
+    });
+  }
+
+  /* =========================================================
+     РЕНДЕР — ДЕРЕВО
+     ========================================================= */
+  function searchMatches() {
+    const q = state.query.trim().toLowerCase();
+    if (!q) return null;
+    const nodeIds = new Set();
+    allNodes().forEach((n) => { if (n.name.toLowerCase().includes(q)) nodeIds.add(n.id); });
+    allEmployees().forEach((e) => {
+      if (e.name.toLowerCase().includes(q)) {
+        const p = effectivePrimary(e.id);
+        if (p) nodeIds.add(p);
+      }
+    });
+    return nodeIds;
+  }
+
+  function renderTree() {
+    const matches = searchMatches();
+    if (matches) {
+      matches.forEach((id) => ancestorsOf(id).forEach((a) => state.expanded.add(a)));
+    }
+    const root = document.getElementById("treeScroll");
+    root.innerHTML = "";
+    root.appendChild(buildUnassignedPin());
+    root.appendChild(buildTreeNode(N.company, matches));
+    if (matches && matches.size === 0) {
+      const note = document.createElement("div");
+      note.className = "empty-note";
+      note.textContent = "Нет совпадений.";
+      root.appendChild(note);
+    }
+  }
+
+  function buildUnassignedPin() {
+    const wrap = document.createElement("div");
+    wrap.className = "unassigned-pin";
+    const row = document.createElement("div");
+    row.className = "tree-row" + (state.selectedId === UNASSIGNED ? " selected" : "");
+    row.innerHTML =
+      '<span class="twisty empty"></span>' +
+      '<span class="node-swatch" style="background:var(--unassigned);border-radius:50%"></span>' +
+      '<span class="tree-row__label">Требуют назначения</span>' +
+      '<span class="count-pill">' + unassignedEmployees().length + "</span>";
+    row.addEventListener("click", () => selectNode(UNASSIGNED));
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function buildTreeNode(id, matches) {
+    const n = nodes[id];
+    const kids = childrenOf(id);
+    const wrap = document.createElement("div");
+    wrap.className = "tree-node" + (n.isTemporary ? " is-temp" : "");
+
+    const row = document.createElement("div");
+    row.className = "tree-row" + (state.selectedId === id ? " selected" : "") + (n.status === "archived" ? " is-archived" : "") + (matches && matches.has(id) ? " match" : "");
+
+    const twisty = document.createElement("span");
+    twisty.className = "twisty" + (kids.length === 0 ? " empty" : "");
+    twisty.textContent = kids.length ? (state.expanded.has(id) ? "▾" : "▸") : "";
+    twisty.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (state.expanded.has(id)) state.expanded.delete(id); else state.expanded.add(id);
+      renderTree();
+    });
+    row.appendChild(twisty);
+
+    const swatch = document.createElement("span");
+    swatch.className = "node-swatch " + (n.status === "archived" ? "archived" : n.isTemporary ? "temp" : "perm");
+    row.appendChild(swatch);
+
+    const label = document.createElement("span");
+    label.className = "tree-row__label";
+    label.textContent = n.name;
+    row.appendChild(label);
+
+    if (depthOf(id) >= DEEP_WARN_DEPTH && n.status !== "archived") {
+      const w = document.createElement("span");
+      w.className = "tree-row__warn"; w.title = "Слишком глубокая структура"; w.textContent = "⚠";
+      row.appendChild(w);
+    }
+    if (n.status !== "archived" && n.type !== "company" && !hasManager(n)) {
+      const w = document.createElement("span");
+      w.className = "tree-row__warn"; w.title = "Нет руководителя"; w.textContent = "○";
+      row.appendChild(w);
+    }
+
+    const count = document.createElement("span");
+    count.className = "count-pill";
+    count.textContent = nodeHeadcount(id);
+    row.appendChild(count);
+
+    row.addEventListener("click", () => selectNode(id));
+    wrap.appendChild(row);
+
+    if (kids.length && state.expanded.has(id)) {
+      const childWrap = document.createElement("div");
+      childWrap.className = "tree-children";
+      kids.forEach((c) => childWrap.appendChild(buildTreeNode(c.id, matches)));
+      wrap.appendChild(childWrap);
+    }
+    return wrap;
+  }
+
+  /* =========================================================
+     РЕНДЕР — ДЕТАЛИ УЗЛА
+     ========================================================= */
+  function employeeChip(id, opts) {
+    opts = opts || {};
+    const e = employees[id];
+    return '<span class="chip chip--outline">' + escapeHtml(e.name) + (opts.suffix || "") + "</span>";
+  }
+
+  function renderDetail() {
+    const pane = document.getElementById("detailPane");
+    if (state.selectedId === UNASSIGNED) { pane.innerHTML = renderUnassignedDetail(); bindUnassignedHandlers(); return; }
+    const n = nodes[state.selectedId];
+    if (!n) { state.selectedId = N.company; return renderDetail(); }
+
+    const manager = n.managerId ? employees[n.managerId] : null;
+    const acting = n.actingManager ? employees[n.actingManager.employeeId] : null;
+    const parent = n.parentId ? nodes[n.parentId] : null;
+    const primaryPeople = employeesPrimaryAt(n.id);
+    const secondaryPeople = employeesSecondaryAt(n.id);
+    const isArchived = n.status === "archived";
+    const deep = depthOf(n.id) >= DEEP_WARN_DEPTH;
+
+    let html = "";
+    html += '<div class="detail-card">';
+    html += '<div class="detail-eyebrow">';
+    html += '<span class="chip ' + (n.isTemporary ? "chip--temp" : "chip--accent") + '">' + TYPE_LABEL[n.type] + (n.isTemporary ? " · временная" : "") + "</span>";
+    if (isArchived) html += '<span class="chip chip--outline">Архив</span>';
+    html += "</div>";
+    html += '<h1 class="detail-title">' + escapeHtml(n.name) + "</h1>";
+    html += '<div class="detail-sub">Родитель: ' + (parent ? "<b>" + escapeHtml(parent.name) + "</b>" : "—") + "</div>";
+
+    if (!isArchived && n.type !== "company" && !hasManager(n)) {
+      html += '<div class="warn-banner"><span>⚠</span><div><strong>Нет назначенного руководителя</strong>Добавьте руководителя или временного И.О., чтобы структура не осталась без ответственного.</div></div>';
+    }
+    if (!isArchived && deep) {
+      html += '<div class="warn-banner"><span>⚠</span><div><strong>Слишком глубокая структура</strong>Этот узел находится на уровне ' + (depthOf(n.id) + 1) + ' от компании — проверьте, действительно ли нужна такая вложенность.</div></div>';
+    }
+    if (isArchived) {
+      html += '<div class="warn-banner" style="background:var(--paper);color:var(--ink-soft);"><span>🗄</span><div><strong>Архивный узел</strong>Сохранён для истории, недоступен для новых назначений.</div></div>';
+    }
+
+    html += '<div class="info-grid">';
+    html += infoItem("Руководитель", manager ? escapeHtml(manager.name) + (manager.title ? " <span class=\"info-item__value muted\" style=\"display:inline\">· " + escapeHtml(manager.title) + "</span>" : "") : '<span class="info-item__value muted">не назначен</span>');
+    html += infoItem("И.О. / временный руководитель", acting ? escapeHtml(acting.name) + '<div class="date-range" style="color:var(--ink-faint);font-size:11.5px;margin-top:2px;">' + fmtDate(n.actingManager.startDate) + " – " + fmtDate(n.actingManager.endDate) + "</div>" : '<span class="info-item__value muted">нет</span>');
+    html += infoItem("Статус", isArchived ? '<span class="chip chip--outline">Архив</span>' : '<span class="chip chip--good">Активна</span>');
+    html += infoItem("Сотрудников", String(primaryPeople.length + secondaryPeople.length));
+    if (n.isTemporary) {
+      html += infoItem("Период", '<span class="date-range">' + fmtDate(n.startDate) + " – " + fmtDate(n.endDate) + "</span>");
+    }
+    html += "</div>";
+
+    if (!isArchived) {
+      html += '<div class="actions-panel">';
+      html += '<button class="btn btn--sm" data-act="addChild">+ Дочерний узел</button>';
+      if (n.type === "project") html += '<button class="btn btn--sm" data-act="addTeamInProject">+ Бригада в проекте</button>';
+      html += '<button class="btn btn--sm" data-act="rename">Переименовать</button>';
+      if (n.type !== "company") html += '<button class="btn btn--sm" data-act="changeType">Изменить тип</button>';
+      html += '<button class="btn btn--sm" data-act="setManager">Назначить руководителя</button>';
+      html += '<button class="btn btn--sm" data-act="setActing">Назначить И.О.</button>';
+      if (n.type !== "company") html += '<button class="btn btn--sm" data-act="reparent">Сменить родителя / переместить ветку</button>';
+      html += '<button class="btn btn--sm" data-act="addEmployee">+ Сотрудник сюда</button>';
+      if (n.type !== "company") html += '<button class="btn btn--sm btn--danger" data-act="archive">Закрыть / архивировать</button>';
+      html += "</div>";
+    }
+
+    html += '<div class="section-block"><div class="section-block__head"><h3>Сотрудники (' + (primaryPeople.length + secondaryPeople.length) + ")</h3></div>";
+    html += '<div class="people-list">';
+    if (primaryPeople.length === 0 && secondaryPeople.length === 0) {
+      html += '<div class="empty-note">Пока никто не назначен сюда.</div>';
+    }
+    primaryPeople.forEach((e) => { html += personRow(e, n.id, "primary"); });
+    secondaryPeople.forEach((e) => { html += personRow(e, n.id, "secondary"); });
+    html += "</div></div>";
+
+    html += "</div>";
+    pane.innerHTML = html;
+    bindDetailHandlers(n);
+  }
+
+  function infoItem(label, valueHtml) {
+    return '<div class="info-item"><div class="info-item__label">' + label + '</div><div class="info-item__value">' + valueHtml + "</div></div>";
+  }
+
+  function personRow(e, nodeId, kind) {
+    let html = '<div class="person-row">';
+    html += '<div class="avatar">' + initials(e.name) + "</div>";
+    html += '<div><div class="person-row__name">' + escapeHtml(e.name) + '</div><div class="person-row__title">' + escapeHtml(e.title || "") + "</div></div>";
+    html += '<div class="person-row__tags">';
+    if (kind === "secondary") html += '<span class="chip chip--temp">доп. связь</span>';
+    if (e.override && e.override.active && e.override.tempNodeId === nodeId) {
+      html += '<span class="chip chip--temp">временный Primary · ' + fmtDate(e.override.endDate) + "</span>";
+    }
+    html += "</div>";
+    html += '<div class="person-row__actions">';
+    if (e.override && e.override.active && e.override.tempNodeId === nodeId) {
+      html += '<button class="btn btn--xs" data-emp-act="endOverride" data-emp="' + e.id + '">Завершить период</button>';
+    } else if (kind === "primary") {
+      html += '<button class="btn btn--xs" data-emp-act="move" data-emp="' + e.id + '">Переместить</button>';
+      html += '<button class="btn btn--xs" data-emp-act="addSecondary" data-emp="' + e.id + '">+ Проект</button>';
+      html += '<button class="btn btn--xs" data-emp-act="tempPrimary" data-emp="' + e.id + '">Врем. Primary</button>';
+    } else {
+      html += '<button class="btn btn--xs" data-emp-act="removeSecondary" data-emp="' + e.id + '" data-node="' + nodeId + '">Убрать связь</button>';
+    }
+    html += "</div></div>";
+    return html;
+  }
+
+  function renderUnassignedDetail() {
+    const list = unassignedEmployees();
+    let html = '<div class="detail-card">';
+    html += '<div class="detail-eyebrow"><span class="chip chip--unassigned">Системная зона</span></div>';
+    html += '<h1 class="detail-title">Требуют назначения</h1>';
+    html += '<div class="detail-sub">Это не подразделение — временный список сотрудников без основной принадлежности. У зоны нет руководителя и обычной иерархии.</div>';
+    html += '<div class="actions-panel"><button class="btn btn--sm btn--primary" data-act="addUnassignedEmployee">+ Новый сотрудник без назначения</button></div>';
+    html += '<div class="section-block"><div class="section-block__head"><h3>Сотрудники (' + list.length + ")</h3></div>";
+    html += '<div class="people-list">';
+    if (list.length === 0) html += '<div class="empty-note">Сейчас никто не требует назначения.</div>';
+    list.forEach((e) => {
+      html += '<div class="person-row unassigned-person-row">';
+      html += '<div class="unassigned-person-row__top"><div class="avatar" style="background:var(--unassigned-soft);color:var(--unassigned);">' + initials(e.name) + '</div><div><div class="person-row__name">' + escapeHtml(e.name) + '</div><div class="person-row__title">' + escapeHtml(e.title || "") + "</div></div>";
+      html += '<div class="person-row__actions" style="margin-left:auto;"><button class="btn btn--xs btn--primary" data-emp-act="assignUnassigned" data-emp="' + e.id + '">Назначить принадлежность</button></div>';
+      html += "</div>";
+      html += '<div class="unassigned-person-row__reason">' + escapeHtml(e.unassignedReason || "Причина не указана") + "</div>";
+      html += "</div>";
+    });
+    html += "</div></div></div>";
+    return html;
+  }
+
+  /* =========================================================
+     ОБРАБОТЧИКИ КНОПОК ДЕТАЛЬ-ПАНЕЛИ
+     ========================================================= */
+  function bindDetailHandlers(n) {
+    const pane = document.getElementById("detailPane");
+    pane.querySelectorAll("[data-act]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const act = btn.dataset.act;
+        if (act === "addChild") openAddNodeModal(n.id, null);
+        if (act === "addTeamInProject") openAddNodeModal(n.id, "team");
+        if (act === "rename") openRenameModal(n.id);
+        if (act === "changeType") openChangeTypeModal(n.id);
+        if (act === "setManager") openManagerModal(n.id, false);
+        if (act === "setActing") openManagerModal(n.id, true);
+        if (act === "reparent") openReparentModal(n.id);
+        if (act === "addEmployee") openAddEmployeeModal(n.id);
+        if (act === "archive") openArchiveModal(n.id);
+      });
+    });
+    pane.querySelectorAll("[data-emp-act]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const act = btn.dataset.empAct;
+        const empId = btn.dataset.emp;
+        if (act === "move") openMoveEmployeeModal(empId);
+        if (act === "addSecondary") openAddSecondaryModal(empId);
+        if (act === "tempPrimary") openTempPrimaryModal(empId, n.id);
+        if (act === "removeSecondary") { removeSecondaryLink(empId, btn.dataset.node); renderAll(); showToast("Связь убрана"); }
+        if (act === "endOverride") { endOverride(empId); renderAll(); showToast("Временный период завершён — сотрудник вернулся на постоянное место"); }
+      });
+    });
+  }
+  function bindUnassignedHandlers() {
+    const pane = document.getElementById("detailPane");
+    pane.querySelectorAll("[data-act='addUnassignedEmployee']").forEach((btn) => btn.addEventListener("click", () => openAddEmployeeModal(null)));
+    pane.querySelectorAll("[data-emp-act='assignUnassigned']").forEach((btn) => btn.addEventListener("click", () => openAssignUnassignedModal(btn.dataset.emp)));
+  }
+
+  function selectNode(id) { state.selectedId = id; renderAll(); }
+
+  /* =========================================================
+     МОДАЛЬНЫЕ ОКНА
+     ========================================================= */
+  function openModal(title, bodyHtml, wide) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalBody").innerHTML = bodyHtml;
+    document.getElementById("modalBox").classList.toggle("modal--wide", !!wide);
+    document.getElementById("modalOverlay").classList.remove("hidden");
+  }
+  function closeModal() {
+    document.getElementById("modalOverlay").classList.add("hidden");
+    document.getElementById("modalBody").innerHTML = "";
+  }
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document.getElementById("modalOverlay").addEventListener("click", (e) => { if (e.target.id === "modalOverlay") closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  function nodePickerOptions(excludeIds, selectedId) {
+    excludeIds = excludeIds || [];
+    return activeNodesFlat()
+      .filter((row) => nodes[row.id].status !== "archived" && !excludeIds.includes(row.id))
+      .map((row) => '<option value="' + row.id + '"' + (row.id === selectedId ? " selected" : "") + ">" + "—".repeat(row.depth) + " " + escapeHtml(nodes[row.id].name) + "</option>")
+      .join("");
+  }
+  function employeePickerOptions(selectedId) {
+    return allEmployees()
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((e) => {
+        const home = e.primaryNodeId ? nodes[e.primaryNodeId].name : "Не назначен";
+        return '<option value="' + e.id + '"' + (e.id === selectedId ? " selected" : "") + ">" + escapeHtml(e.name) + " — " + escapeHtml(home) + "</option>";
+      })
+      .join("");
+  }
+
+  function openAddNodeModal(parentId, presetType) {
+    const body =
+      '<form id="f">' +
+      '<div class="field"><label>Название</label><input type="text" name="name" required placeholder="например, Team Nachtdienst"></div>' +
+      '<div class="field"><label>Тип</label><select name="type">' +
+      Object.keys(TYPE_LABEL).filter((t) => t !== "company").map((t) => '<option value="' + t + '"' + (t === presetType ? " selected" : "") + ">" + TYPE_LABEL[t] + "</option>").join("") +
+      "</select></div>" +
+      '<div class="checkbox-field"><input type="checkbox" id="isTemp" name="isTemporary" ' + (presetType === "team" ? "checked" : "") + '><label for="isTemp">Временная структура</label></div>' +
+      '<div class="field-row dates-row hidden" id="datesRow"><div class="field"><label>Начало</label><input type="date" name="startDate"></div><div class="field"><label>Окончание</label><input type="date" name="endDate"></div></div>' +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Создать</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div>' +
+      "</form>";
+    openModal("Новый узел внутри «" + nodes[parentId].name + "»", body);
+    const form = document.getElementById("f");
+    const isTemp = document.getElementById("isTemp");
+    const datesRow = document.getElementById("datesRow");
+    function syncDates() { datesRow.classList.toggle("hidden", !isTemp.checked); }
+    isTemp.addEventListener("change", syncDates); syncDates();
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const id = addChildNode({
+        parentId, name: fd.get("name").trim(), type: fd.get("type"), isTemporary: !!fd.get("isTemporary"),
+        startDate: fd.get("startDate"), endDate: fd.get("endDate"),
+      });
+      state.expanded.add(parentId);
+      state.selectedId = id;
+      closeModal(); renderAll(); showToast("Узел создан");
+    });
+  }
+
+  function openRenameModal(id) {
+    const body =
+      '<form id="f"><div class="field"><label>Название</label><input type="text" name="name" required value="' + escapeAttr(nodes[id].name) + '"></div>' +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Сохранить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Переименовать узел", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (e) => {
+      e.preventDefault();
+      renameNode(id, new FormData(e.target).get("name").trim());
+      closeModal(); renderAll(); showToast("Название обновлено");
+    });
+  }
+
+  function openChangeTypeModal(id) {
+    const body =
+      '<form id="f"><div class="field"><label>Тип узла</label><select name="type">' +
+      Object.keys(TYPE_LABEL).filter((t) => t !== "company").map((t) => '<option value="' + t + '"' + (t === nodes[id].type ? " selected" : "") + ">" + TYPE_LABEL[t] + "</option>").join("") +
+      "</select></div>" +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Сохранить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Изменить тип узла", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (e) => {
+      e.preventDefault();
+      changeType(id, new FormData(e.target).get("type"));
+      closeModal(); renderAll(); showToast("Тип изменён");
+    });
+  }
+
+  function openManagerModal(id, acting) {
+    const n = nodes[id];
+    const current = acting ? (n.actingManager && n.actingManager.employeeId) : n.managerId;
+    let body = '<form id="f"><div class="field"><label>Сотрудник</label><select name="empId"><option value="">— снять назначение —</option>' + employeePickerOptions(current) + "</select></div>";
+    if (acting) {
+      body += '<div class="field-row"><div class="field"><label>Начало</label><input type="date" name="startDate" value="' + escapeAttr((n.actingManager && n.actingManager.startDate) || "") + '"></div><div class="field"><label>Окончание</label><input type="date" name="endDate" value="' + escapeAttr((n.actingManager && n.actingManager.endDate) || "") + '"></div></div>';
+      body += '<p class="field-hint">И.О. отображается отдельно от постоянного руководителя и не заменяет его в истории.</p>';
+    }
+    body += '<div class="btn-row"><button type="submit" class="btn btn--primary">Сохранить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal(acting ? "Назначить И.О. / временного руководителя" : "Назначить руководителя", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const empId = fd.get("empId") || null;
+      if (acting) setActingManager(id, empId, fd.get("startDate"), fd.get("endDate"));
+      else setManager(id, empId);
+      closeModal(); renderAll(); showToast("Сохранено");
+    });
+  }
+
+  function openReparentModal(id) {
+    const excluded = subtreeIds(id);
+    const body =
+      '<p>Текущий родитель: <b>' + escapeHtml(nodes[nodes[id].parentId].name) + '</b></p>' +
+      '<form id="f"><div class="field"><label>Новый родитель</label><select name="parentId">' + nodePickerOptions(excluded, nodes[id].parentId) + "</select></div>" +
+      '<p class="field-hint">Нельзя выбрать сам узел или его дочернюю ветку — это создало бы цикл.</p>' +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Переместить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Сменить родителя — «" + nodes[id].name + "»", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (e) => {
+      e.preventDefault();
+      reparent(id, new FormData(e.target).get("parentId"));
+      closeModal(); renderAll(); showToast("Ветка перемещена");
+    });
+  }
+
+  function openAddEmployeeModal(nodeId) {
+    const body =
+      '<form id="f"><div class="field"><label>Имя</label><input type="text" name="name" required placeholder="Имя Фамилия"></div>' +
+      '<div class="field"><label>Должность</label><input type="text" name="title" placeholder="например, Pflegefachkraft"></div>' +
+      (nodeId ? "" : '<p class="field-hint">Сотрудник будет создан без основной принадлежности и появится в «Требуют назначения».</p>') +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Добавить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal(nodeId ? "Новый сотрудник — «" + nodes[nodeId].name + "»" : "Новый сотрудник без назначения", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      createEmployee({ name: fd.get("name").trim(), title: fd.get("title").trim(), primaryNodeId: nodeId });
+      closeModal(); renderAll();
+      showToast(nodeId ? "Сотрудник добавлен" : "Сотрудник добавлен в «Требуют назначения»");
+    });
+  }
+
+  function openMoveEmployeeModal(empId) {
+    const e = employees[empId];
+    const body =
+      '<form id="f"><div class="field"><label>Новая основная принадлежность</label><select name="nodeId">' + nodePickerOptions([], e.primaryNodeId) + "</select></div>" +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Переместить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Переместить «" + e.name + "»", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      moveEmployeePrimary(empId, new FormData(ev.target).get("nodeId"));
+      closeModal(); renderAll(); showToast("Сотрудник перемещён");
+    });
+  }
+
+  function openAddSecondaryModal(empId) {
+    const e = employees[empId];
+    const body =
+      '<p>Постоянная принадлежность (<b>' + escapeHtml(nodes[e.primaryNodeId].name) + '</b>) не изменится — это дополнительная связь.</p>' +
+      '<form id="f"><div class="field"><label>Проект / временная структура</label><select name="nodeId">' +
+      activeNodesFlat().filter((r) => nodes[r.id].isTemporary && nodes[r.id].status !== "archived" && r.id !== e.primaryNodeId)
+        .map((r) => '<option value="' + r.id + '">' + escapeHtml(nodes[r.id].name) + "</option>").join("") +
+      "</select></div>" +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Добавить связь</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Добавить в проект — «" + e.name + "»", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      addSecondaryLink(empId, new FormData(ev.target).get("nodeId"));
+      closeModal(); renderAll(); showToast("Проектная связь добавлена");
+    });
+  }
+
+  function openTempPrimaryModal(empId, currentNodeId) {
+    const e = employees[empId];
+    const body =
+      '<p>«' + escapeHtml(e.name) + '» временно станет Primary в выбранной структуре. Постоянное место (<b>' + escapeHtml(nodes[e.primaryNodeId].name) + '</b>) сохранится и восстановится по окончании периода.</p>' +
+      '<form id="f"><div class="field"><label>Временная структура</label><select name="nodeId">' +
+      activeNodesFlat().filter((r) => nodes[r.id].isTemporary && nodes[r.id].status !== "archived")
+        .map((r) => '<option value="' + r.id + '"' + (r.id === currentNodeId ? " selected" : "") + ">" + escapeHtml(nodes[r.id].name) + "</option>").join("") +
+      "</select></div>" +
+      '<div class="field-row"><div class="field"><label>Начало</label><input type="date" name="startDate" required></div><div class="field"><label>Окончание</label><input type="date" name="endDate" required></div></div>' +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Начать период</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Временный Primary — «" + e.name + "»", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      startOverride(empId, fd.get("nodeId"), fd.get("startDate"), fd.get("endDate"));
+      closeModal(); renderAll(); showToast("Временный период начат");
+    });
+  }
+
+  function openAssignUnassignedModal(empId) {
+    const e = employees[empId];
+    const body =
+      '<form id="f"><div class="field"><label>Куда назначить</label><select name="nodeId">' + nodePickerOptions([]) + "</select></div>" +
+      '<div class="btn-row"><button type="submit" class="btn btn--primary">Назначить</button><button type="button" class="btn" id="cancelBtn">Отмена</button></div></form>';
+    openModal("Назначить принадлежность — «" + e.name + "»", body);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("f").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      assignFromUnassigned(empId, new FormData(ev.target).get("nodeId"));
+      closeModal(); renderAll(); showToast("Принадлежность назначена — сотрудник больше не в «Требуют назначения»");
+    });
+  }
+
+  function openArchiveModal(id) {
+    const n = nodes[id];
+    const descendantIds = subtreeIds(id).filter((x) => x !== id);
+    const affectedEmployees = subtreeIds(id).reduce((acc, sid) => acc.concat(employeesPrimaryAt(sid)), []);
+    let body = '<div class="impact-box"><h4>Затронутые дочерние узлы (' + descendantIds.length + ")</h4>";
+    body += descendantIds.length ? "<ul>" + descendantIds.map((cid) => "<li>" + escapeHtml(nodes[cid].name) + " · " + TYPE_LABEL[nodes[cid].type] + "</li>").join("") + "</ul>" : '<p style="margin:0;color:var(--ink-faint);">Нет</p>';
+    body += "</div>";
+    body += '<div class="impact-box"><h4>Затронутые сотрудники (' + affectedEmployees.length + ")</h4>";
+    body += affectedEmployees.length ? "<ul>" + affectedEmployees.map((e) => "<li>" + escapeHtml(e.name) + "</li>").join("") + "</ul>" : '<p style="margin:0;color:var(--ink-faint);">Нет</p>';
+    body += "</div>";
+    body += '<div class="impact-choice impact-choice--danger" id="choiceArchive"><span class="impact-choice__icon">🗄</span><div><div class="impact-choice__title">Archive subtree</div><div class="impact-choice__desc">Архивировать «' + escapeHtml(n.name) + '» и всю дочернюю ветку целиком. Сотрудники без другого места попадут в «Требуют назначения».</div></div></div>';
+    body += '<div class="impact-choice" id="choiceReparent"><span class="impact-choice__icon">↥</span><div><div class="impact-choice__title">Reparent children</div><div class="impact-choice__desc">Дочерние узлы переносятся на уровень выше (к родителю «' + escapeHtml(nodes[n.parentId].name) + '»), продолжают работать. Архивируется только сам «' + escapeHtml(n.name) + '».</div></div></div>';
+    body += '<div class="btn-row"><button type="button" class="btn" id="cancelBtn">Cancel</button></div>';
+    openModal("Impact Preview — закрытие «" + n.name + "»", body, true);
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("choiceArchive").addEventListener("click", () => { archiveSubtree(id); state.selectedId = nodes[id].parentId; closeModal(); renderAll(); showToast("Структура архивирована"); });
+    document.getElementById("choiceReparent").addEventListener("click", () => { reparentChildrenThenArchive(id); state.selectedId = nodes[id].parentId; closeModal(); renderAll(); showToast("Дочерние узлы перенесены, узел архивирован"); });
+  }
+
+  /* =========================================================
+     ПОИСК
+     ========================================================= */
+  const searchInput = document.getElementById("searchInput");
+  const searchHint = document.getElementById("searchHint");
+  searchInput.addEventListener("input", () => {
+    state.query = searchInput.value;
+    renderSearchHint();
+    renderTree();
+  });
+  searchInput.addEventListener("focus", renderSearchHint);
+  document.addEventListener("click", (e) => { if (!e.target.closest(".search-box")) searchHint.classList.add("hidden"); });
+
+  function renderSearchHint() {
+    const q = state.query.trim().toLowerCase();
+    if (!q) { searchHint.classList.add("hidden"); return; }
+    const nodeHits = allNodes().filter((n) => n.name.toLowerCase().includes(q)).slice(0, 6);
+    const empHits = allEmployees().filter((e) => e.name.toLowerCase().includes(q)).slice(0, 6);
+    if (!nodeHits.length && !empHits.length) { searchHint.classList.add("hidden"); return; }
+    let html = "";
+    nodeHits.forEach((n) => { html += '<div class="search-hint__item" data-goto-node="' + n.id + '"><span class="node-swatch ' + (n.isTemporary ? "temp" : "perm") + '"></span>' + escapeHtml(n.name) + '<span class="search-hint__meta">' + TYPE_LABEL[n.type] + "</span></div>"; });
+    empHits.forEach((e) => { const p = effectivePrimary(e.id); html += '<div class="search-hint__item" data-goto-emp="' + e.id + '">👤 ' + escapeHtml(e.name) + '<span class="search-hint__meta">' + (p ? escapeHtml(nodes[p].name) : "не назначен") + "</span></div>"; });
+    searchHint.innerHTML = html;
+    searchHint.classList.remove("hidden");
+    searchHint.querySelectorAll("[data-goto-node]").forEach((el) => el.addEventListener("click", () => { selectNode(el.dataset.gotoNode); searchHint.classList.add("hidden"); }));
+    searchHint.querySelectorAll("[data-goto-emp]").forEach((el) => el.addEventListener("click", () => {
+      const p = effectivePrimary(el.dataset.gotoEmp);
+      selectNode(p || UNASSIGNED);
+      searchHint.classList.add("hidden");
+    }));
+  }
+
+  /* =========================================================
+     TOPBAR / WARNINGS SUMMARY
+     ========================================================= */
+  function renderTopbarWarnings() {
+    const el = document.getElementById("topbarWarnings");
+    const noManagerCount = allNodes().filter((n) => n.status !== "archived" && n.type !== "company" && !hasManager(n)).length;
+    const deepCount = allNodes().filter((n) => n.status !== "archived" && depthOf(n.id) >= DEEP_WARN_DEPTH).length;
+    const unassignedCount = unassignedEmployees().length;
+    let html = "";
+    if (noManagerCount) html += '<span class="chip chip--warn" title="Узлы без руководителя">○ ' + noManagerCount + "</span>";
+    if (deepCount) html += '<span class="chip chip--warn" title="Слишком глубокие структуры">⚠ ' + deepCount + "</span>";
+    html += '<span class="chip chip--unassigned" title="Требуют назначения">' + unassignedCount + " без назначения</span>";
+    el.innerHTML = html;
+  }
+
+  /* =========================================================
+     ORG MAP
+     ========================================================= */
+  function renderMap() {
+    const wrap = document.getElementById("mapCanvasWrap");
+    const canvas = document.getElementById("mapCanvas");
+    const colW = 190, rowH = 130;
+    let leafX = 0;
+    const pos = {};
+    function layout(id, depth) {
+      const kids = childrenOf(id);
+      if (!kids.length) { pos[id] = { x: leafX * colW, y: depth * rowH }; leafX++; return pos[id].x; }
+      const xs = kids.map((c) => layout(c.id, depth + 1));
+      const myX = (Math.min(...xs) + Math.max(...xs)) / 2;
+      pos[id] = { x: myX, y: depth * rowH };
+      return myX;
+    }
+    layout(N.company, 0);
+    const maxX = Math.max(...Object.values(pos).map((p) => p.x)) + colW;
+    const maxY = Math.max(...Object.values(pos).map((p) => p.y)) + 110;
+
+    canvas.style.width = maxX + "px";
+    canvas.style.height = maxY + "px";
+    canvas.style.transform = "scale(" + state.mapZoom + ")";
+
+    let svg = '<svg width="' + maxX + '" height="' + maxY + '" style="position:absolute;top:0;left:0;pointer-events:none;">';
+    allNodes().forEach((n) => {
+      if (!n.parentId) return;
+      const a = pos[n.id], b = pos[n.parentId];
+      if (!a || !b) return;
+      svg += '<path d="M ' + (b.x + 84) + " " + (b.y + 78) + " C " + (b.x + 84) + " " + (b.y + 105) + ", " + (a.x + 84) + " " + (a.y - 27) + ", " + (a.x + 84) + " " + (a.y) + '" stroke="var(--border-strong)" stroke-width="1.5" fill="none"/>';
+    });
+    svg += "</svg>";
+
+    let blocks = "";
+    allNodes().forEach((n) => {
+      const p = pos[n.id];
+      if (!p) return;
+      blocks += '<div class="map-block' + (n.isTemporary ? " is-temp" : "") + (n.status === "archived" ? " is-archived" : "") + (state.selectedId === n.id ? " selected" : "") + '" style="left:' + p.x + "px; top:" + p.y + 'px;" data-map-node="' + n.id + '">';
+      blocks += '<div class="map-block__type">' + TYPE_LABEL[n.type] + "</div>";
+      blocks += '<div class="map-block__name">' + escapeHtml(n.name) + "</div>";
+      const showNoManagerWarn = n.status !== "archived" && n.type !== "company" && !hasManager(n);
+      blocks += '<div class="map-block__meta">👤 ' + nodeHeadcount(n.id) + (showNoManagerWarn ? ' · <span style="color:var(--warn)">нет рук.</span>' : "") + "</div>";
+      blocks += "</div>";
+    });
+
+    canvas.innerHTML = svg + blocks;
+    canvas.querySelectorAll("[data-map-node]").forEach((el) => {
+      el.addEventListener("click", () => { state.selectedId = el.dataset.mapNode; renderMap(); });
+      el.addEventListener("dblclick", () => { switchView("split"); });
+    });
+    document.getElementById("mapZoomLabel").textContent = Math.round(state.mapZoom * 100) + "%";
+  }
+
+  document.getElementById("mapZoomIn").addEventListener("click", () => { state.mapZoom = Math.min(1.6, state.mapZoom + 0.15); renderMap(); });
+  document.getElementById("mapZoomOut").addEventListener("click", () => { state.mapZoom = Math.max(0.45, state.mapZoom - 0.15); renderMap(); });
+  document.getElementById("mapReset").addEventListener("click", () => { state.mapZoom = 1; document.getElementById("mapCanvasWrap").scrollTo(0, 0); renderMap(); });
+  document.getElementById("mapBackBtn").addEventListener("click", () => switchView("split"));
+
+  /* =========================================================
+     VIEW SWITCH
+     ========================================================= */
+  function switchView(view) {
+    state.view = view;
+    document.getElementById("splitView").classList.toggle("hidden", view !== "split");
+    document.getElementById("mapView").classList.toggle("hidden", view !== "map");
+    document.getElementById("btnViewSplit").classList.toggle("active", view === "split");
+    document.getElementById("btnViewMap").classList.toggle("active", view === "map");
+    if (view === "map") renderMap(); else renderAll();
+  }
+  document.getElementById("btnViewSplit").addEventListener("click", () => switchView("split"));
+  document.getElementById("btnViewMap").addEventListener("click", () => switchView("map"));
+
+  /* =========================================================
+     UTIL
+     ========================================================= */
+  function escapeHtml(v) { return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function escapeAttr(v) { return escapeHtml(v).replace(/"/g, "&quot;"); }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add("hidden"), 2600);
+  }
+
+  function renderAll() {
+    renderTree();
+    renderDetail();
+    renderTopbarWarnings();
+  }
+
+  renderAll();
+
+  // Экспорт для ручной проверки/автотестов в консоли браузера.
+  window.__proto = {
+    nodes, employees, state, N, UNASSIGNED,
+    addChildNode, renameNode, changeType, setManager, setActingManager, moveEmployeePrimary,
+    addSecondaryLink, removeSecondaryLink, startOverride, endOverride, reparent, createEmployee,
+    assignFromUnassigned, archiveSubtree, reparentChildrenThenArchive, subtreeIds, isSelfOrDescendant,
+    effectivePrimary, employeesPrimaryAt, unassignedEmployees, depthOf, selectNode, switchView, renderAll,
+  };
+})();
+</script>
+</body>
+</html>
